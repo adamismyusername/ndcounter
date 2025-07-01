@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>National Debt Widget - Debug Version</title>
+    <style>
+        /* Debug Container Styles */
+        .debug-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .debug-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 4px;
+            border-left: 4px solid #007cba;
+        }
+        
+        .debug-log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        /* US National Debt Widget - Embedded CSS */
+        #debt-widget-container {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            text-align: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        #debt-amount {
+            font-size: 54px;
+            font-weight: 700;
+            color: #B91C1C;
+            text-align: center;
+            margin: 0 auto 10px auto;
+            line-height: 1.2;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+        }
+
+        .widget-info {
+            font-weight: 400;
+            color: #B0BEC5;
+            margin: 0 auto;
+            padding: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            text-align: center;
+        }
+
+        #last-updated-date {
+            font-size: 16px;
+            margin-right: 25px;
+        }
+
+        #data-source {
+            font-size: 16px;
+        }
+
+        #debt-amount .digit-container {
+            display: inline-block;
+            text-align: center;
+            width: 0.55em;
+            margin: 0;
+            padding: 0;
+        }
+
+        #debt-amount .digit-container.comma {
+            width: 0.3em;
+            margin: 0;
+            padding: 0;
+            position: relative;
+            left: -0.05em;
+        }
+
+        #debt-amount .currency-symbol {
+            display: inline-block;
+            text-align: left;
+            width: 0.8em;
+            margin-right: 0.15em;
+        }
+
+        @media (max-width: 992px) {
+            #debt-amount {
+                font-size: 42px;
+            }
+            #last-updated-date, #data-source {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #debt-amount {
+                font-size: 36px;
+            }
+            #last-updated-date, #data-source {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #debt-amount {
+                font-size: 28px;
+            }
+            
+            .widget-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+            
+            #last-updated-date, #data-source {
+                margin: 0;
+                font-size: 10px;
+            }
+        }
+        
+        .test-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .test-button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .test-button:hover {
+            background: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 National Debt Widget - Debug Version</h1>
+        
+        <div class="debug-section">
+            <h2>📊 Widget Preview</h2>
+            <!-- US National Debt Widget HTML Structure -->
+            <div id="debt-widget-container">
+                <div id="debt-amount">Loading...</div>
+                <div class="widget-info">
+                    <span id="last-updated-date">Updated: Today's Date</span>
+                    <span id="data-source">Source: https://fiscaldata.treasury.gov</span>
+                </div>
+            </div>
+            
+            <div class="test-buttons">
+                <button class="test-button" onclick="testRemoteFiles()">Test Remote Files</button>
+                <button class="test-button" onclick="testAPI()">Test API Direct</button>
+                <button class="test-button" onclick="runLocalWidget()">Run Local Widget</button>
+                <button class="test-button" onclick="clearLog()">Clear Log</button>
+            </div>
+        </div>
+        
+        <div class="debug-section">
+            <h2>🔧 Debug Log</h2>
+            <div id="debug-log" class="debug-log">Initializing debug environment...\n</div>
+        </div>
+        
+        <div class="debug-section">
+            <h2>📋 Issue Checklist</h2>
+            <div id="checklist">
+                <p>⏳ Checking remote file accessibility...</p>
+                <p>⏳ Checking API connectivity...</p>
+                <p>⏳ Checking CORS policies...</p>
+                <p>⏳ Checking JavaScript execution...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Debug logging function
+        function debugLog(message) {
+            const debugElement = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            debugElement.textContent += `[${timestamp}] ${message}\n`;
+            debugElement.scrollTop = debugElement.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log').textContent = 'Debug log cleared...\n';
+        }
+
+        // Test remote files
+        async function testRemoteFiles() {
+            debugLog('🧪 Testing remote file accessibility...');
+            
+            // Test CSS file
+            try {
+                const cssResponse = await fetch('https://adamismyusername.github.io/ndcounter/style.css');
+                debugLog(`CSS Response: ${cssResponse.status} ${cssResponse.statusText}`);
+                if (cssResponse.ok) {
+                    const cssText = await cssResponse.text();
+                    debugLog(`✅ CSS loaded successfully (${cssText.length} chars)`);
+                } else {
+                    debugLog(`❌ CSS failed to load: ${cssResponse.status}`);
+                }
+            } catch (error) {
+                debugLog(`❌ CSS fetch error: ${error.message}`);
+            }
+
+            // Test JS file
+            try {
+                const jsResponse = await fetch('https://adamismyusername.github.io/ndcounter/national-debt-counter.js');
+                debugLog(`JS Response: ${jsResponse.status} ${jsResponse.statusText}`);
+                if (jsResponse.ok) {
+                    const jsText = await jsResponse.text();
+                    debugLog(`✅ JS loaded successfully (${jsText.length} chars)`);
+                    
+                    // Check if JS contains expected content
+                    if (jsText.includes('DebtWidgetConfig')) {
+                        debugLog('✅ JS contains DebtWidgetConfig');
+                    } else {
+                        debugLog('❌ JS missing DebtWidgetConfig');
+                    }
+                } else {
+                    debugLog(`❌ JS failed to load: ${jsResponse.status}`);
+                }
+            } catch (error) {
+                debugLog(`❌ JS fetch error: ${error.message}`);
+            }
+        }
+
+        // Test API directly
+        async function testAPI() {
+            debugLog('🧪 Testing Treasury API directly...');
+            
+            const apiUrl = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page[size]=1&format=json';
+            
+            try {
+                debugLog(`Fetching: ${apiUrl}`);
+                const response = await fetch(apiUrl);
+                debugLog(`API Response: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    debugLog(`✅ API data received`);
+                    debugLog(`Data structure: ${Object.keys(data)}`);
+                    
+                    if (data.data && data.data.length > 0) {
+                        const latest = data.data[0];
+                        debugLog(`Record fields: ${Object.keys(latest)}`);
+                        debugLog(`Debt amount field: ${latest.tot_pub_debt_out_amt || 'NOT FOUND'}`);
+                        debugLog(`Record date: ${latest.record_date || 'NOT FOUND'}`);
+                    }
+                } else {
+                    debugLog(`❌ API failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                debugLog(`❌ API error: ${error.message}`);
+                debugLog(`This might be a CORS issue - API blocks browser requests`);
+            }
+        }
+
+        // Run the widget locally with embedded JS
+        function runLocalWidget() {
+            debugLog('🧪 Running widget with local JavaScript...');
+            
+            // Embedded simplified widget code
+            const DebtWidgetConfig = {
+                fallback: {
+                    debtAmount: 36213561491981.97,
+                    lastUpdated: '2025-06-27'
+                },
+                display: {
+                    showSymbol: true,
+                    useCommas: true,
+                    roundToInteger: true,
+                    fixedDigitWidth: false
+                }
+            };
+
+            function formatNumber(number) {
+                let formatted = DebtWidgetConfig.display.roundToInteger ? 
+                    Math.floor(number).toLocaleString('en-US') : 
+                    number.toLocaleString('en-US');
+                
+                return DebtWidgetConfig.display.showSymbol ? '$' + formatted : formatted;
+            }
+
+            function getCurrentDate() {
+                const date = new Date();
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+
+            // Update the widget
+            const debtElement = document.getElementById('debt-amount');
+            const dateElement = document.getElementById('last-updated-date');
+            
+            if (debtElement) {
+                debtElement.textContent = formatNumber(DebtWidgetConfig.fallback.debtAmount);
+                debugLog('✅ Updated debt amount with local data');
+            }
+            
+            if (dateElement) {
+                dateElement.textContent = `Updated: ${getCurrentDate()} (Local Test)`;
+                debugLog('✅ Updated date with local data');
+            }
+        }
+
+        // Check if remote widget is working
+        function checkRemoteWidget() {
+            debugLog('🔍 Checking if remote widget loaded...');
+            
+            // Check if the remote script created global variables
+            if (typeof window.DebtWidgetConfig !== 'undefined') {
+                debugLog('✅ DebtWidgetConfig found - remote script loaded');
+                debugLog(`Config: ${JSON.stringify(window.DebtWidgetConfig, null, 2)}`);
+            } else {
+                debugLog('❌ DebtWidgetConfig not found - remote script may not have loaded');
+            }
+            
+            if (typeof window.refreshDebtWidget === 'function') {
+                debugLog('✅ refreshDebtWidget function found');
+                debugLog('Trying to refresh widget...');
+                window.refreshDebtWidget();
+            } else {
+                debugLog('❌ refreshDebtWidget function not found');
+            }
+        }
+
+        // Initial setup
+        debugLog('🚀 Debug environment initialized');
+        debugLog('Widget container found: ' + (document.getElementById('debt-widget-container') ? 'YES' : 'NO'));
+        debugLog('Current debt element text: "' + document.getElementById('debt-amount').textContent + '"');
+        debugLog('Current date element text: "' + document.getElementById('last-updated-date').textContent + '"');
+
+        // Auto-run tests
+        setTimeout(() => {
+            debugLog('🔄 Auto-running initial tests...');
+            testRemoteFiles();
+            setTimeout(() => testAPI(), 1000);
+            setTimeout(() => checkRemoteWidget(), 2000);
+        }, 1000);
+    </script>
+</body>
+</html>
