@@ -1,13 +1,13 @@
 /**
- * US National Debt Widget - JSON Data Source Version
- * Version: 1.0.2
+ * US National Debt Widget - Enhanced Animation System
+ * Version: 1.0.3
  * Repository: https://github.com/adamismyusername/ndcounter
  * 
- * NEW in v1.0.2:
- * - Reads from cached JSON data instead of live API
- * - Faster loading and better reliability
- * - No API rate limit concerns
- * - Enhanced CSS override support
+ * NEW in v1.0.3:
+ * - Enhanced animation with larger, more dramatic increments
+ * - Two-phase animation system for smooth, precise landing
+ * - More impactful visual experience
+ * - Always lands exactly on target value
  */
 
 (function() {
@@ -25,12 +25,16 @@
             retryDelay: 1000
         },
         
-        // Animation settings
+        // Enhanced animation settings
         animation: {
             enabled: true,               // Enable/disable the counting animation
-            duration: 100000,              // Duration of animation in milliseconds
-            reductionPercentage: 0.0005,    // Start animation from X% less than actual value
-            easing: 'easeOutExpo'        // Animation easing function
+            duration: 3000,              // Total duration in milliseconds (increased for better effect)
+            reductionPercentage: 0.1,    // Start animation from X% less than actual value
+            easing: 'easeOutExpo',       // Animation easing function
+            // New animation settings
+            largeIncrement: 347,         // Primary increment size for dramatic effect
+            phase1Percentage: 0.95,      // Percentage of animation using large increments
+            smoothFinishSteps: 60        // Number of steps for smooth final approach
         },
         
         // Display settings
@@ -152,7 +156,7 @@
         return date.toLocaleDateString('en-US', options);
     }
 
-    // Animate counting from start to end value
+    // Enhanced two-phase animation system
     function animateCount(startValue, endValue, element) {
         if (!element || !DebtWidgetConfig.animation.enabled) {
             if (element) {
@@ -169,25 +173,84 @@
             cancelAnimationFrame(window.debtAnimationFrame);
         }
         
-        const duration = DebtWidgetConfig.animation.duration;
-        const easingFn = EasingFunctions[DebtWidgetConfig.animation.easing] || EasingFunctions.linear;
+        const config = DebtWidgetConfig.animation;
+        const totalDistance = endValue - startValue;
+        const duration = config.duration;
+        const easingFn = EasingFunctions[config.easing] || EasingFunctions.linear;
+        
+        // Calculate phase boundaries
+        const phase1Duration = duration * config.phase1Percentage;
+        const phase2Duration = duration * (1 - config.phase1Percentage);
+        const phase1EndValue = startValue + (totalDistance * config.phase1Percentage);
+        
+        // Phase 1: Large increments for dramatic effect
+        const phase1Distance = phase1EndValue - startValue;
+        const phase1Steps = Math.floor(phase1Distance / config.largeIncrement);
+        const actualPhase1Distance = phase1Steps * config.largeIncrement;
+        const actualPhase1EndValue = startValue + actualPhase1Distance;
+        
+        // Phase 2: Smooth finish to exact target
+        const phase2StartValue = actualPhase1EndValue;
+        const phase2Distance = endValue - phase2StartValue;
+        
         const startTime = performance.now();
+        
+        console.log('[DebtWidget] Animation phases:', {
+            total: totalDistance.toLocaleString(),
+            phase1: {
+                distance: actualPhase1Distance.toLocaleString(),
+                steps: phase1Steps,
+                increment: config.largeIncrement,
+                duration: phase1Duration
+            },
+            phase2: {
+                distance: phase2Distance.toLocaleString(),
+                steps: config.smoothFinishSteps,
+                duration: phase2Duration
+            }
+        });
         
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const easedProgress = easingFn(progress);
+            const totalProgress = Math.min(elapsed / duration, 1);
             
-            const currentValue = startValue + (endValue - startValue) * easedProgress;
+            let currentValue;
             
+            if (elapsed <= phase1Duration) {
+                // Phase 1: Large increments with easing
+                const phase1Progress = elapsed / phase1Duration;
+                const easedPhase1Progress = easingFn(phase1Progress);
+                const phase1Steps = Math.floor(easedPhase1Progress * phase1Steps);
+                currentValue = startValue + (phase1Steps * config.largeIncrement);
+            } else {
+                // Phase 2: Smooth finish to exact target
+                const phase2Elapsed = elapsed - phase1Duration;
+                const phase2Progress = Math.min(phase2Elapsed / phase2Duration, 1);
+                const easedPhase2Progress = easingFn(phase2Progress);
+                currentValue = phase2StartValue + (phase2Distance * easedPhase2Progress);
+            }
+            
+            // Ensure we never exceed the target value
+            currentValue = Math.min(currentValue, endValue);
+            
+            // Update display
             if (DebtWidgetConfig.display.fixedDigitWidth) {
                 element.innerHTML = formatNumberWithFixedWidth(currentValue);
             } else {
                 element.textContent = formatNumber(currentValue);
             }
             
-            if (progress < 1) {
+            // Continue animation or finish
+            if (totalProgress < 1) {
                 window.debtAnimationFrame = requestAnimationFrame(animate);
+            } else {
+                // Ensure we end exactly on target value
+                if (DebtWidgetConfig.display.fixedDigitWidth) {
+                    element.innerHTML = formatNumberWithFixedWidth(endValue);
+                } else {
+                    element.textContent = formatNumber(endValue);
+                }
+                console.log('[DebtWidget] ✅ Animation completed - landed exactly on target:', endValue.toLocaleString());
             }
         };
         
@@ -251,7 +314,7 @@
                 date: latest.record_date,
                 lastUpdated: new Date().toISOString(),
                 source: 'U.S. Treasury API (live)',
-                version: '1.0.2'
+                version: '1.0.3'
             };
         } else {
             throw new Error('No data found in Treasury API response');
@@ -295,13 +358,20 @@
             }
             
             console.log('[DebtWidget] Data loaded:', {
-                amount: debtData.amount,
+                amount: debtData.amount.toLocaleString(),
                 date: debtData.date,
                 source: debtData.source || 'Unknown'
             });
             
-            // Update debt amount with animation
+            // Enhanced animation with larger increments
             const startValue = debtData.amount * (1 - DebtWidgetConfig.animation.reductionPercentage);
+            console.log('[DebtWidget] 🎬 Starting enhanced animation:', {
+                from: startValue.toLocaleString(),
+                to: debtData.amount.toLocaleString(),
+                increment: DebtWidgetConfig.animation.largeIncrement,
+                duration: DebtWidgetConfig.animation.duration + 'ms'
+            });
+            
             animateCount(startValue, debtData.amount, elements.debtAmount);
             
             // Update date
@@ -336,7 +406,7 @@
 
     // Initialize the widget
     function initDebtWidget() {
-        console.log('[DebtWidget] 🚀 Initializing US National Debt Widget v1.0.2...');
+        console.log('[DebtWidget] 🚀 Initializing US National Debt Widget v1.0.3...');
         
         const elements = getWidgetElements();
         
@@ -388,6 +458,6 @@
     // Expose configuration for external modification
     window.DebtWidgetConfig = DebtWidgetConfig;
     
-    console.log('[DebtWidget] 📦 Script loaded successfully - v1.0.2 (JSON Data Source)');
+    console.log('[DebtWidget] 📦 Script loaded successfully - v1.0.3 (Enhanced Animation)');
 
 })();
