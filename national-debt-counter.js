@@ -1,13 +1,13 @@
 /**
- * US National Debt Widget - Enhanced Animation System
+ * US National Debt Widget - Enhanced Animation System (Fixed)
  * Version: 1.0.3
  * Repository: https://github.com/adamismyusername/ndcounter
  * 
  * NEW in v1.0.3:
  * - Enhanced animation with larger, more dramatic increments
- * - Two-phase animation system for smooth, precise landing
- * - More impactful visual experience
+ * - Simplified but robust animation system
  * - Always lands exactly on target value
+ * - Better error handling and debugging
  */
 
 (function() {
@@ -28,13 +28,11 @@
         // Enhanced animation settings
         animation: {
             enabled: true,               // Enable/disable the counting animation
-            duration: 3000,              // Total duration in milliseconds (increased for better effect)
+            duration: 3000,              // Total duration in milliseconds
             reductionPercentage: 0.1,    // Start animation from X% less than actual value
             easing: 'easeOutExpo',       // Animation easing function
-            // New animation settings
-            largeIncrement: 347,         // Primary increment size for dramatic effect
-            phase1Percentage: 0.95,      // Percentage of animation using large increments
-            smoothFinishSteps: 60        // Number of steps for smooth final approach
+            // Enhanced increment settings
+            incrementSize: 347           // Increment size for more dramatic effect
         },
         
         // Display settings
@@ -156,7 +154,7 @@
         return date.toLocaleDateString('en-US', options);
     }
 
-    // Enhanced two-phase animation system
+    // Enhanced animation with larger increments and smooth landing
     function animateCount(startValue, endValue, element) {
         if (!element || !DebtWidgetConfig.animation.enabled) {
             if (element) {
@@ -169,6 +167,7 @@
             return;
         }
         
+        // Cancel any existing animation
         if (window.debtAnimationFrame) {
             cancelAnimationFrame(window.debtAnimationFrame);
         }
@@ -177,60 +176,52 @@
         const totalDistance = endValue - startValue;
         const duration = config.duration;
         const easingFn = EasingFunctions[config.easing] || EasingFunctions.linear;
+        const incrementSize = config.incrementSize;
         
-        // Calculate phase boundaries
-        const phase1Duration = duration * config.phase1Percentage;
-        const phase2Duration = duration * (1 - config.phase1Percentage);
-        const phase1EndValue = startValue + (totalDistance * config.phase1Percentage);
+        // Calculate the transition point (90% through animation)
+        const transitionPoint = 0.9;
+        const fastPhaseDistance = totalDistance * transitionPoint;
+        const slowPhaseDistance = totalDistance * (1 - transitionPoint);
         
-        // Phase 1: Large increments for dramatic effect
-        const phase1Distance = phase1EndValue - startValue;
-        const phase1Steps = Math.floor(phase1Distance / config.largeIncrement);
-        const actualPhase1Distance = phase1Steps * config.largeIncrement;
-        const actualPhase1EndValue = startValue + actualPhase1Distance;
-        
-        // Phase 2: Smooth finish to exact target
-        const phase2StartValue = actualPhase1EndValue;
-        const phase2Distance = endValue - phase2StartValue;
+        // Calculate steps for fast phase
+        const fastPhaseSteps = Math.floor(fastPhaseDistance / incrementSize);
+        const actualFastDistance = fastPhaseSteps * incrementSize;
+        const fastPhaseEndValue = startValue + actualFastDistance;
         
         const startTime = performance.now();
         
-        console.log('[DebtWidget] Animation phases:', {
-            total: totalDistance.toLocaleString(),
-            phase1: {
-                distance: actualPhase1Distance.toLocaleString(),
-                steps: phase1Steps,
-                increment: config.largeIncrement,
-                duration: phase1Duration
-            },
-            phase2: {
-                distance: phase2Distance.toLocaleString(),
-                steps: config.smoothFinishSteps,
-                duration: phase2Duration
-            }
+        console.log('[DebtWidget] 🎬 Enhanced animation starting:', {
+            from: startValue.toLocaleString(),
+            to: endValue.toLocaleString(),
+            totalDistance: totalDistance.toLocaleString(),
+            incrementSize: incrementSize,
+            fastPhaseSteps: fastPhaseSteps,
+            fastPhaseDistance: actualFastDistance.toLocaleString(),
+            slowPhaseDistance: slowPhaseDistance.toLocaleString(),
+            duration: duration + 'ms'
         });
         
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
-            const totalProgress = Math.min(elapsed / duration, 1);
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easingFn(progress);
             
             let currentValue;
             
-            if (elapsed <= phase1Duration) {
-                // Phase 1: Large increments with easing
-                const phase1Progress = elapsed / phase1Duration;
-                const easedPhase1Progress = easingFn(phase1Progress);
-                const phase1Steps = Math.floor(easedPhase1Progress * phase1Steps);
-                currentValue = startValue + (phase1Steps * config.largeIncrement);
+            if (progress < transitionPoint) {
+                // Fast phase: Use large increments
+                const fastPhaseProgress = progress / transitionPoint;
+                const easedFastProgress = easingFn(fastPhaseProgress);
+                const currentSteps = Math.floor(easedFastProgress * fastPhaseSteps);
+                currentValue = startValue + (currentSteps * incrementSize);
             } else {
-                // Phase 2: Smooth finish to exact target
-                const phase2Elapsed = elapsed - phase1Duration;
-                const phase2Progress = Math.min(phase2Elapsed / phase2Duration, 1);
-                const easedPhase2Progress = easingFn(phase2Progress);
-                currentValue = phase2StartValue + (phase2Distance * easedPhase2Progress);
+                // Slow phase: Smooth approach to exact target
+                const slowPhaseProgress = (progress - transitionPoint) / (1 - transitionPoint);
+                const easedSlowProgress = easingFn(slowPhaseProgress);
+                currentValue = fastPhaseEndValue + (slowPhaseDistance * easedSlowProgress);
             }
             
-            // Ensure we never exceed the target value
+            // Ensure we never exceed the target
             currentValue = Math.min(currentValue, endValue);
             
             // Update display
@@ -240,17 +231,17 @@
                 element.textContent = formatNumber(currentValue);
             }
             
-            // Continue animation or finish
-            if (totalProgress < 1) {
+            // Continue or finish animation
+            if (progress < 1) {
                 window.debtAnimationFrame = requestAnimationFrame(animate);
             } else {
-                // Ensure we end exactly on target value
+                // Ensure final value is exactly correct
                 if (DebtWidgetConfig.display.fixedDigitWidth) {
                     element.innerHTML = formatNumberWithFixedWidth(endValue);
                 } else {
                     element.textContent = formatNumber(endValue);
                 }
-                console.log('[DebtWidget] ✅ Animation completed - landed exactly on target:', endValue.toLocaleString());
+                console.log('[DebtWidget] ✅ Animation completed - final value:', endValue.toLocaleString());
             }
         };
         
@@ -363,15 +354,8 @@
                 source: debtData.source || 'Unknown'
             });
             
-            // Enhanced animation with larger increments
+            // Start enhanced animation
             const startValue = debtData.amount * (1 - DebtWidgetConfig.animation.reductionPercentage);
-            console.log('[DebtWidget] 🎬 Starting enhanced animation:', {
-                from: startValue.toLocaleString(),
-                to: debtData.amount.toLocaleString(),
-                increment: DebtWidgetConfig.animation.largeIncrement,
-                duration: DebtWidgetConfig.animation.duration + 'ms'
-            });
-            
             animateCount(startValue, debtData.amount, elements.debtAmount);
             
             // Update date
@@ -412,7 +396,6 @@
         
         if (elements.debtAmount) {
             console.log('[DebtWidget] Widget elements found, loading data...');
-            
             fetchDebtData();
             
             // Note: Auto-refresh is disabled since data is updated via GitHub Actions
@@ -458,6 +441,6 @@
     // Expose configuration for external modification
     window.DebtWidgetConfig = DebtWidgetConfig;
     
-    console.log('[DebtWidget] 📦 Script loaded successfully - v1.0.3 (Enhanced Animation)');
+    console.log('[DebtWidget] 📦 Script loaded successfully - v1.0.3 (Enhanced Animation - Fixed)');
 
 })();
