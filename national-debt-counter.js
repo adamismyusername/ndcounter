@@ -1,14 +1,13 @@
 /**
- * US National Debt Widget - Clean Implementation
+ * US National Debt Widget - JSON Data Source Version
  * Version: 1.0.2
  * Repository: https://github.com/adamismyusername/ndcounter
- * Documentation: https://github.com/adamismyusername/ndcounter/wiki
  * 
  * NEW in v1.0.2:
+ * - Reads from cached JSON data instead of live API
+ * - Faster loading and better reliability
+ * - No API rate limit concerns
  * - Enhanced CSS override support
- * - Clean, focused implementation
- * - Improved error messages
- * - Optimized performance
  */
 
 (function() {
@@ -16,15 +15,13 @@
     
     // Configuration Object - Edit these settings to customize the widget
     const DebtWidgetConfig = {
-        // API settings
-        api: {
-            url: 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny',
-            params: {
-                sort: '-record_date',  // Sort by date descending (newest first)
-                pageSize: 1,           // Just get the latest data
-                format: 'json'         // Response format
-            },
-            maxRetries: 3,
+        // Data source settings
+        data: {
+            // Primary data source - your cached JSON file
+            url: 'https://adamismyusername.github.io/ndcounter/data/debt-data.json',
+            // Fallback to Treasury API if JSON fails (with rate limiting protection)
+            fallbackToAPI: false,  // Disabled to prevent rate limiting
+            maxRetries: 2,
             retryDelay: 1000
         },
         
@@ -45,16 +42,17 @@
             fixedDigitWidth: true       // Use fixed-width digit containers for anti-jiggle
         },
         
-        // Refresh settings
+        // Refresh settings - disabled since data is cached
         refresh: {
-            autoRefresh: true,         // Automatically refresh data
-            interval: 3600000          // Refresh interval in milliseconds (1 hour)
+            autoRefresh: false,         // Disabled - data refreshes via GitHub Actions
+            interval: 86400000          // 24 hours (not used when autoRefresh is false)
         },
         
-        // Fallback data (updated from latest API response)
+        // Emergency fallback data (only used if JSON file and API both fail)
         fallback: {
-            debtAmount: 36215124313382.16,  // Latest known amount from API
-            lastUpdated: '2025-06-27'       // Last known update date
+            debtAmount: 36215124313382.16,
+            lastUpdated: '2025-06-27',
+            source: 'Emergency fallback data'
         }
     };
 
@@ -121,7 +119,7 @@
         return formatted;
     }
 
-    // Original format function (for non-HTML use cases)
+    // Simple format function (for non-HTML use cases)
     function formatNumber(number) {
         let formatted = '';
         
@@ -196,57 +194,67 @@
         window.debtAnimationFrame = requestAnimationFrame(animate);
     }
 
-    // Build the API URL with parameters
-    function buildApiUrl() {
-        const url = new URL(DebtWidgetConfig.api.url);
-        const params = DebtWidgetConfig.api.params;
-        
-        Object.keys(params).forEach(key => {
-            if (key === 'pageSize') {
-                url.searchParams.append('page[size]', params[key]);
-            } else {
-                url.searchParams.append(key, params[key]);
-            }
-        });
-        
-        return url.toString();
-    }
-
     // Sleep function for retry delays
     function sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // Enhanced fetch with CORS handling and retries
-    async function fetchWithRetry(url, options = {}, retryCount = 0) {
+    // Fetch data with retries
+    async function fetchWithRetry(url, retryCount = 0) {
         try {
-            // Try with CORS mode first
+            console.log(`[DebtWidget] Fetching data (attempt ${retryCount + 1}):`, url);
+            
             const response = await fetch(url, {
                 method: 'GET',
-                mode: 'cors',
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                ...options
+                }
             });
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
-            return await response.json();
+            const data = await response.json();
+            console.log('[DebtWidget] ✅ Data fetched successfully');
+            return data;
             
         } catch (error) {
             console.warn(`[DebtWidget] Fetch attempt ${retryCount + 1} failed:`, error.message);
             
-            // If we have retries left, try again
-            if (retryCount < DebtWidgetConfig.api.maxRetries) {
-                await sleep(DebtWidgetConfig.api.retryDelay * (retryCount + 1));
-                return fetchWithRetry(url, options, retryCount + 1);
+            if (retryCount < DebtWidgetConfig.data.maxRetries) {
+                await sleep(DebtWidgetConfig.data.retryDelay * (retryCount + 1));
+                return fetchWithRetry(url, retryCount + 1);
             }
             
             throw error;
+        }
+    }
+
+    // Fallback to Treasury API (only if enabled and JSON fails)
+    async function fetchFromTreasuryAPI() {
+        if (!DebtWidgetConfig.data.fallbackToAPI) {
+            throw new Error('Treasury API fallback is disabled');
+        }
+        
+        console.log('[DebtWidget] Attempting Treasury API fallback...');
+        const apiUrl = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page[size]=1&format=json';
+        
+        const response = await fetchWithRetry(apiUrl);
+        
+        if (response.data && response.data.length > 0) {
+            const latest = response.data[0];
+            
+            // Convert to our standard format
+            return {
+                amount: parseFloat(latest.tot_pub_debt_out_amt),
+                date: latest.record_date,
+                lastUpdated: new Date().toISOString(),
+                source: 'U.S. Treasury API (live)',
+                version: '1.0.2'
+            };
+        } else {
+            throw new Error('No data found in Treasury API response');
         }
     }
 
@@ -260,57 +268,55 @@
         }
         
         try {
-            console.log('[DebtWidget] Fetching debt data...');
-            const apiUrl = buildApiUrl();
-            console.log('[DebtWidget] API URL:', apiUrl);
+            console.log('[DebtWidget] Loading debt data...');
             
-            const data = await fetchWithRetry(apiUrl);
+            let debtData = null;
             
-            // Process the data
-            if (data && data.data && data.data.length > 0) {
-                const latest = data.data[0];
-                console.log('[DebtWidget] Latest record received:', latest);
+            try {
+                // Try to fetch from cached JSON data first
+                debtData = await fetchWithRetry(DebtWidgetConfig.data.url);
+                console.log('[DebtWidget] ✅ Loaded data from cached JSON');
+            } catch (jsonError) {
+                console.warn('[DebtWidget] JSON data failed, trying fallback:', jsonError.message);
                 
-                // The correct field name from the API is 'tot_pub_debt_out_amt'
-                let debtAmount = null;
-                
-                if (latest.tot_pub_debt_out_amt !== undefined && latest.tot_pub_debt_out_amt !== null) {
-                    debtAmount = parseFloat(latest.tot_pub_debt_out_amt);
+                try {
+                    // Try Treasury API fallback if enabled
+                    debtData = await fetchFromTreasuryAPI();
+                    console.log('[DebtWidget] ✅ Loaded data from Treasury API fallback');
+                } catch (apiError) {
+                    console.warn('[DebtWidget] Treasury API fallback failed:', apiError.message);
+                    throw new Error('All data sources failed');
                 }
-                
-                if (debtAmount && !isNaN(debtAmount)) {
-                    console.log(`[DebtWidget] Debt amount found:`, debtAmount);
-                    
-                    // Update debt amount with animation
-                    const startValue = debtAmount * (1 - DebtWidgetConfig.animation.reductionPercentage);
-                    animateCount(startValue, debtAmount, elements.debtAmount);
-                    
-                    // Update date
-                    if (elements.dateElement) {
-                        if (latest.record_date) {
-                            const recordDate = new Date(latest.record_date);
-                            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                            elements.dateElement.textContent = `Updated: ${recordDate.toLocaleDateString('en-US', options)}`;
-                        } else {
-                            elements.dateElement.textContent = `Updated: ${getCurrentDate()}`;
-                        }
-                    }
-                    
-                    console.log('[DebtWidget] ✅ Widget updated successfully with live data');
-                    
-                } else {
-                    throw new Error('No valid debt amount found in response');
-                }
-                
-            } else {
-                throw new Error('No data found in API response');
             }
             
-        } catch (error) {
-            console.warn('[DebtWidget] API error, using fallback data:', error.message);
+            // Validate data structure
+            if (!debtData || typeof debtData.amount !== 'number' || !debtData.date) {
+                throw new Error('Invalid data structure received');
+            }
             
-            // Use fallback data
-            console.log('[DebtWidget] Using fallback data');
+            console.log('[DebtWidget] Data loaded:', {
+                amount: debtData.amount,
+                date: debtData.date,
+                source: debtData.source || 'Unknown'
+            });
+            
+            // Update debt amount with animation
+            const startValue = debtData.amount * (1 - DebtWidgetConfig.animation.reductionPercentage);
+            animateCount(startValue, debtData.amount, elements.debtAmount);
+            
+            // Update date
+            if (elements.dateElement) {
+                const recordDate = new Date(debtData.date);
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                elements.dateElement.textContent = `Updated: ${recordDate.toLocaleDateString('en-US', options)}`;
+            }
+            
+            console.log('[DebtWidget] ✅ Widget updated successfully');
+            
+        } catch (error) {
+            console.warn('[DebtWidget] All data sources failed, using emergency fallback:', error.message);
+            
+            // Use emergency fallback data
             const fallbackAmount = DebtWidgetConfig.fallback.debtAmount;
             const startValue = fallbackAmount * (1 - DebtWidgetConfig.animation.reductionPercentage);
             
@@ -321,10 +327,10 @@
             if (elements.dateElement) {
                 const fallbackDate = new Date(DebtWidgetConfig.fallback.lastUpdated);
                 const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                elements.dateElement.textContent = `Updated: ${fallbackDate.toLocaleDateString('en-US', options)} (Estimated)`;
+                elements.dateElement.textContent = `Updated: ${fallbackDate.toLocaleDateString('en-US', options)} (Emergency Data)`;
             }
             
-            console.log('[DebtWidget] ✅ Fallback data loaded successfully');
+            console.log('[DebtWidget] ⚠️ Emergency fallback data loaded');
         }
     }
 
@@ -335,21 +341,16 @@
         const elements = getWidgetElements();
         
         if (elements.debtAmount) {
-            console.log('[DebtWidget] Widget elements found, fetching data...');
-            console.log('[DebtWidget] Found elements:', {
-                container: !!elements.container,
-                debtAmount: !!elements.debtAmount,
-                dateElement: !!elements.dateElement,
-                sourceElement: !!elements.sourceElement,
-                infoContainer: !!elements.infoContainer
-            });
+            console.log('[DebtWidget] Widget elements found, loading data...');
             
             fetchDebtData();
             
-            // Set up auto-refresh if enabled
+            // Note: Auto-refresh is disabled since data is updated via GitHub Actions
             if (DebtWidgetConfig.refresh.autoRefresh) {
-                setInterval(fetchDebtData, DebtWidgetConfig.refresh.interval);
                 console.log(`[DebtWidget] Auto-refresh enabled: every ${DebtWidgetConfig.refresh.interval / 1000 / 60} minutes`);
+                setInterval(fetchDebtData, DebtWidgetConfig.refresh.interval);
+            } else {
+                console.log('[DebtWidget] Auto-refresh disabled - data updates via GitHub Actions');
             }
         } else {
             console.error('[DebtWidget] Widget elements not found. Please check your HTML structure.');
@@ -357,17 +358,15 @@
         }
     }
 
-    // Enhanced initialization with multiple fallback methods
+    // Enhanced initialization
     function initializeWidget() {
-        // Method 1: If DOM is already loaded
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initDebtWidget);
         } else {
-            // Method 2: DOM already loaded, init immediately
             initDebtWidget();
         }
         
-        // Method 3: Backup initialization after delay
+        // Backup initialization
         setTimeout(() => {
             const elements = getWidgetElements();
             if (elements.debtAmount && (elements.debtAmount.textContent === 'Loading...' || elements.debtAmount.textContent.trim() === '')) {
@@ -380,7 +379,7 @@
     // Start the widget
     initializeWidget();
 
-    // Expose a manual refresh function for debugging
+    // Expose manual refresh function for debugging
     window.refreshDebtWidget = function() {
         console.log('[DebtWidget] Manual refresh triggered');
         fetchDebtData();
@@ -389,9 +388,6 @@
     // Expose configuration for external modification
     window.DebtWidgetConfig = DebtWidgetConfig;
     
-    // Expose element finder for debugging
-    window.findDebtWidgetElements = getWidgetElements;
-    
-    console.log('[DebtWidget] 📦 Script loaded successfully - v1.0.2');
+    console.log('[DebtWidget] 📦 Script loaded successfully - v1.0.2 (JSON Data Source)');
 
 })();
