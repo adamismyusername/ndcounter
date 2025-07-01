@@ -1,0 +1,115 @@
+name: Update National Debt Data
+
+# Run every day at 9:00 AM EST (2:00 PM UTC during standard time, 1:00 PM UTC during daylight time)
+# Using 13:00 UTC to account for daylight saving time variations
+on:
+  schedule:
+    - cron: '0 13 * * *'  # Daily at 1:00 PM UTC
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  update-debt-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Create data directory
+      run: mkdir -p data
+      
+    - name: Fetch debt data from Treasury API
+      run: |
+        node -e "
+        const https = require('https');
+        const fs = require('fs');
+        
+        const apiUrl = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page[size]=1&format=json';
+        
+        console.log('🚀 Fetching latest debt data from Treasury API...');
+        console.log('API URL:', apiUrl);
+        
+        https.get(apiUrl, (res) => {
+          let data = '';
+          
+          res.on('data', (chunk) => {
+            data += chunk;
+          });
+          
+          res.on('end', () => {
+            try {
+              const jsonData = JSON.parse(data);
+              
+              if (jsonData.data && jsonData.data.length > 0) {
+                const latest = jsonData.data[0];
+                
+                // Create simplified data structure
+                const debtData = {
+                  amount: parseFloat(latest.tot_pub_debt_out_amt),
+                  date: latest.record_date,
+                  lastUpdated: new Date().toISOString(),
+                  source: 'U.S. Treasury Bureau of the Fiscal Service',
+                  apiUrl: 'https://fiscaldata.treasury.gov',
+                  version: '1.0.2'
+                };
+                
+                console.log('✅ Data fetched successfully:');
+                console.log('  Debt Amount: \$' + debtData.amount.toLocaleString());
+                console.log('  Record Date:', debtData.date);
+                console.log('  Last Updated:', debtData.lastUpdated);
+                
+                // Write to data file
+                fs.writeFileSync('data/debt-data.json', JSON.stringify(debtData, null, 2));
+                console.log('✅ Data saved to data/debt-data.json');
+                
+                // Also create a backup with timestamp
+                const timestamp = new Date().toISOString().split('T')[0];
+                fs.writeFileSync(\`data/debt-data-\${timestamp}.json\`, JSON.stringify(debtData, null, 2));
+                console.log(\`✅ Backup saved to data/debt-data-\${timestamp}.json\`);
+                
+              } else {
+                console.error('❌ No data found in API response');
+                process.exit(1);
+              }
+            } catch (error) {
+              console.error('❌ Error parsing API response:', error);
+              process.exit(1);
+            }
+          });
+        }).on('error', (error) => {
+          console.error('❌ Error fetching data:', error);
+          process.exit(1);
+        });
+        "
+        
+    - name: Verify data file
+      run: |
+        if [ -f "data/debt-data.json" ]; then
+          echo "✅ Data file created successfully"
+          echo "File size: $(wc -c < data/debt-data.json) bytes"
+          echo "Content preview:"
+          head -n 10 data/debt-data.json
+        else
+          echo "❌ Data file not found"
+          exit 1
+        fi
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "📊 Update national debt data - $(date +'%Y-%m-%d %H:%M UTC')"
+          git push
+          echo "✅ Changes committed and pushed"
+        fi
