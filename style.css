@@ -1,34 +1,77 @@
 /* 
- * US National Debt Widget - Final Simplified CSS
- * Version: 1.0.1
+ * US National Debt Widget - Override-Friendly CSS
+ * Version: 1.0.2
+ * 
+ * CUSTOMIZATION GUIDE:
+ * This CSS is designed for easy overriding. Use standard CSS selectors
+ * to customize any aspect of the widget. See documentation for examples.
+ * 
+ * Repository: https://github.com/adamismyusername/ndcounter
+ * Documentation: https://github.com/adamismyusername/ndcounter/wiki
  */
 
-/* Main Widget Container */
-#debt-widget-container {
+/* ==========================================================================
+   MAIN WIDGET CONTAINER
+   ========================================================================== */
+
+.debt-widget-container {
     background-color: transparent;
     border: none;
     padding: 0;
     margin: 0;
     width: 100%;
     text-align: center;
-    font-family: 'Inter', -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Debt Amount Display */
-#debt-amount {
+/* ==========================================================================
+   DEBT AMOUNT DISPLAY
+   ========================================================================== */
+
+.debt-amount {
     font-size: 54px;
     font-weight: 700;
     color: #B91C1C;
     text-align: center;
     margin: 0 auto 10px auto;
     line-height: 1.2;
-    /* Anti-jiggle solution */
+    /* Anti-jiggle solution for smooth animations */
     font-feature-settings: "tnum";
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
 }
 
-/* Info Line */
+/* ==========================================================================
+   DIGIT CONTAINERS (for smooth animations)
+   ========================================================================== */
+
+.debt-amount .digit-container {
+    display: inline-block;
+    text-align: center;
+    width: 0.55em;
+    margin: 0;
+    padding: 0;
+}
+
+.debt-amount .digit-container.comma {
+    width: 0.3em;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    left: -0.05em;
+}
+
+.debt-amount .currency-symbol {
+    display: inline-block;
+    text-align: left;
+    width: 0.8em;
+    margin-right: 0.15em;
+}
+
+/* ==========================================================================
+   WIDGET INFO LINE (Date and Source)
+   ========================================================================== */
+
 .widget-info {
     font-weight: 400;
     color: #B0BEC5;
@@ -42,18 +85,94 @@
     text-align: center;
 }
 
-/* Date Text */
-#last-updated-date {
+/* ==========================================================================
+   DATE AND SOURCE TEXT
+   ========================================================================== */
+
+.last-updated-date {
     font-size: 16px;
     margin-right: 25px;
 }
 
-/* Source Text */
-#data-source {
+.data-source {
     font-size: 16px;
 }
 
-/* Digit container styling - these classes are added by JavaScript */
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Tablet Styles */
+@media (max-width: 992px) {
+    .debt-amount {
+        font-size: 42px;
+    }
+    
+    .last-updated-date,
+    .data-source {
+        font-size: 14px;
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .debt-amount {
+        font-size: 36px;
+    }
+    
+    .last-updated-date,
+    .data-source {
+        font-size: 12px;
+    }
+}
+
+/* Small Mobile Styles */
+@media (max-width: 480px) {
+    .debt-amount {
+        font-size: 28px;
+    }
+    
+    /* Stack date and source vertically on small screens */
+    .widget-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .last-updated-date,
+    .data-source {
+        margin: 0;
+        font-size: 10px;
+    }
+}
+
+/* ==========================================================================
+   LEGACY SUPPORT (for existing implementations)
+   ========================================================================== */
+
+/* Support for existing ID-based selectors */
+#debt-widget-container {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    text-align: center;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#debt-amount {
+    font-size: 54px;
+    font-weight: 700;
+    color: #B91C1C;
+    text-align: center;
+    margin: 0 auto 10px auto;
+    line-height: 1.2;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
 #debt-amount .digit-container {
     display: inline-block;
     text-align: center;
@@ -77,13 +196,36 @@
     margin-right: 0.15em;
 }
 
-/* Simple Responsive Rules */
+.widget-info {
+    font-weight: 400;
+    color: #B0BEC5;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    text-align: center;
+}
+
+#last-updated-date {
+    font-size: 16px;
+    margin-right: 25px;
+}
+
+#data-source {
+    font-size: 16px;
+}
+
+/* Legacy responsive styles */
 @media (max-width: 992px) {
     #debt-amount {
         font-size: 42px;
     }
     
-    #last-updated-date, #data-source {
+    #last-updated-date,
+    #data-source {
         font-size: 14px;
     }
 }
@@ -93,7 +235,8 @@
         font-size: 36px;
     }
     
-    #last-updated-date, #data-source {
+    #last-updated-date,
+    #data-source {
         font-size: 12px;
     }
 }
@@ -103,14 +246,8 @@
         font-size: 28px;
     }
     
-    /* Stack date and source on mobile */
-    .widget-info {
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    #last-updated-date, #data-source {
+    #last-updated-date,
+    #data-source {
         margin: 0;
         font-size: 10px;
     }
