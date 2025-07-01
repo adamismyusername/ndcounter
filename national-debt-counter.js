@@ -29,7 +29,7 @@
         animation: {
             enabled: true,               // Enable/disable the counting animation
             duration: 300000,              // Total duration in milliseconds
-            reductionPercentage: 0.00001,    // Start animation from X% less than actual value
+            reductionPercentage: 0.000001,    // Start animation from X% less than actual value
             easing: 'easeOutExpo',       // Animation easing function
             // Enhanced increment settings
             incrementSize: 12347           // Increment size for more dramatic effect
