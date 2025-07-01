@@ -10,147 +10,13 @@
  * Documentation: https://github.com/adamismyusername/ndcounter/wiki
  */
 
-/* ==========================================================================
-   MAIN WIDGET CONTAINER
-   ========================================================================== */
 
-.debt-widget-container {
-    background-color: transparent;
-    border: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    text-align: center;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
 
 /* ==========================================================================
-   DEBT AMOUNT DISPLAY
+   ID-BASED SELECTORS (Primary Implementation)
    ========================================================================== */
 
-.debt-amount {
-    font-size: 54px;
-    font-weight: 700;
-    color: #311B92;
-    text-align: center;
-    margin: 0 auto 10px auto;
-    line-height: 1.2;
-    /* Anti-jiggle solution for smooth animations */
-    font-feature-settings: "tnum";
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-}
-
-/* ==========================================================================
-   DIGIT CONTAINERS (for smooth animations)
-   ========================================================================== */
-
-.debt-amount .digit-container {
-    display: inline-block;
-    text-align: center;
-    width: 0.55em;
-    margin: 0;
-    padding: 0;
-}
-
-.debt-amount .digit-container.comma {
-    width: 0.3em;
-    margin: 0;
-    padding: 0;
-    position: relative;
-    left: -0.05em;
-}
-
-.debt-amount .currency-symbol {
-    display: inline-block;
-    text-align: left;
-    width: 0.8em;
-    margin-right: 0.15em;
-}
-
-/* ==========================================================================
-   WIDGET INFO LINE (Date and Source)
-   ========================================================================== */
-
-.widget-info {
-    font-weight: 400;
-    color: #B0BEC5;
-    margin: 0 auto;
-    padding: 0;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    text-align: center;
-}
-
-/* ==========================================================================
-   DATE AND SOURCE TEXT
-   ========================================================================== */
-
-.last-updated-date {
-    font-size: 16px;
-    margin-right: 25px;
-}
-
-.data-source {
-    font-size: 16px;
-}
-
-/* ==========================================================================
-   RESPONSIVE DESIGN
-   ========================================================================== */
-
-/* Tablet Styles */
-@media (max-width: 992px) {
-    .debt-amount {
-        font-size: 42px;
-    }
-    
-    .last-updated-date,
-    .data-source {
-        font-size: 14px;
-    }
-}
-
-/* Mobile Styles */
-@media (max-width: 768px) {
-    .debt-amount {
-        font-size: 36px;
-    }
-    
-    .last-updated-date,
-    .data-source {
-        font-size: 12px;
-    }
-}
-
-/* Small Mobile Styles */
-@media (max-width: 480px) {
-    .debt-amount {
-        font-size: 28px;
-    }
-    
-    /* Stack date and source vertically on small screens */
-    .widget-info {
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .last-updated-date,
-    .data-source {
-        margin: 0;
-        font-size: 10px;
-    }
-}
-
-/* ==========================================================================
-   LEGACY SUPPORT (for existing implementations)
-   ========================================================================== */
-
-/* Support for existing ID-based selectors */
+/* These ID selectors are the primary implementation for the widget */
 #debt-widget-container {
     background-color: transparent;
     border: none;
@@ -218,7 +84,7 @@
     font-size: 16px;
 }
 
-/* Legacy responsive styles */
+/* Responsive styles for ID selectors */
 @media (max-width: 992px) {
     #debt-amount {
         font-size: 42px;
@@ -244,6 +110,12 @@
 @media (max-width: 480px) {
     #debt-amount {
         font-size: 28px;
+    }
+    
+    .widget-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
     }
     
     #last-updated-date,
