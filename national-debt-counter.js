@@ -28,8 +28,8 @@
         // Enhanced animation settings
         animation: {
             enabled: true,               // Enable/disable the counting animation
-            duration: 3000,              // Total duration in milliseconds
-            reductionPercentage: 0.1,    // Start animation from X% less than actual value
+            duration: 30000,              // Total duration in milliseconds
+            reductionPercentage: 0.001,    // Start animation from X% less than actual value
             easing: 'easeOutExpo',       // Animation easing function
             // Enhanced increment settings
             incrementSize: 347           // Increment size for more dramatic effect
