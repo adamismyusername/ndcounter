@@ -32,7 +32,7 @@
             reductionPercentage: 0.00001,    // Start animation from X% less than actual value
             easing: 'easeOutExpo',       // Animation easing function
             // Enhanced increment settings
-            incrementSize: 347           // Increment size for more dramatic effect
+            incrementSize: 1347           // Increment size for more dramatic effect
         },
         
         // Display settings
