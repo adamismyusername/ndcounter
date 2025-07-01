@@ -28,8 +28,8 @@
         // Animation settings
         animation: {
             enabled: true,               // Enable/disable the counting animation
-            duration: 2000,              // Duration of animation in milliseconds
-            reductionPercentage: 0.1,    // Start animation from X% less than actual value
+            duration: 5000,              // Duration of animation in milliseconds
+            reductionPercentage: 0.05,    // Start animation from X% less than actual value
             easing: 'easeOutExpo'        // Animation easing function
         },
         
