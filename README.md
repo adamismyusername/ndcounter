@@ -13,8 +13,8 @@ A simple, embeddable widget that displays the current U.S. National Debt with li
 7. Pre-built Themes
 8. Responsive Customization
 9. Advanced Examples
-10. Troubleshooting
-11. How It Works [How It Works](#%EF%B8%8F-how-it-works)
+10. [Troubleshooting](#-troubleshooting)
+11. [How It Works](#%EF%B8%8F-how-it-works)
 12. [Support](#-support)
 
 
