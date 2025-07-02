@@ -2,6 +2,23 @@
 
 A simple, embeddable widget that displays the current U.S. National Debt with lightning-fast performance. This lightweight widget can be dropped into any website with a single code snippet and is designed to be responsive, easy to implement, and highly customizable.
 
+# Table of Contents
+
+Live Demo
+Features
+Quick Start
+CSS Customization Guide
+CSS Selector Reference
+Quick Customization Examples
+Pre-built Themes
+Responsive Customization
+Advanced Examples
+Troubleshooting
+How It Works
+Support
+
+[A link to that custom anchor](#-support)
+
 ## 🚀 Live Demo
 
 You can see a live version of the widget here: **[https://adamismyusername.github.io/ndcounter/](https://adamismyusername.github.io/ndcounter/)**
