@@ -28,6 +28,12 @@ To add the U.S. National Debt Counter to your website, copy and paste the follow
 <link rel="stylesheet" href="https://adamismyusername.github.io/ndcounter/national-debt-counter.css">
 <script src="https://adamismyusername.github.io/ndcounter/national-debt-counter.js"></script>
 
+<!-- Begin Custom CSS -->
+<style>
+---CUSTOM CSS CODE GOES HERE---
+</style>
+<!-- End Custom CSS -->
+
 <!-- Widget HTML -->
 <div id="debt-widget-container">
     <div id="debt-amount">Loading...</div>
@@ -42,7 +48,41 @@ To add the U.S. National Debt Counter to your website, copy and paste the follow
 
 ## 🎨 CSS Customization Guide
 
-The widget is designed for easy customization using standard CSS. Simply add your custom styles after the widget's stylesheet.
+The widget is designed for easy customization using standard CSS. 
+
+Add your custom styles inbetween the <style> & </style> tags in the section labeled "Custom CSS".
+
+Simply replace **---CUSTOM CSS CODE GOES HERE---** with your custom CSS as shown in the example below.
+
+```html
+<!-- Begin Custom CSS -->
+<style>
+---CUSTOM CSS CODE GOES HERE---
+</style>
+<!-- End Custom CSS -->
+```
+For example, if you were going to change the color of debt value number to black, your full code would look like this...
+
+```html
+<!-- US National Debt Widget v1.0.2 -->
+<link rel="stylesheet" href="https://adamismyusername.github.io/ndcounter/national-debt-counter.css">
+<script src="https://adamismyusername.github.io/ndcounter/national-debt-counter.js"></script>
+
+<!-- Begin Custom CSS -->
+<style>
+  #debt-amount { color: #000000;}
+</style>
+<!-- End Custom CSS -->
+
+<!-- Widget HTML -->
+<div id="debt-widget-container">
+    <div id="debt-amount">Loading...</div>
+    <div class="widget-info">
+        <span id="last-updated-date">Updated: Today's Date</span>
+        <span id="data-source">Source: https://fiscaldata.treasury.gov</span>
+    </div>
+</div>
+```
 
 ### 📋 CSS Selector Reference
 
