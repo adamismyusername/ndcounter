@@ -4,18 +4,18 @@ A simple, embeddable widget that displays the current U.S. National Debt with li
 
 # Table of Contents
 
-Live Demo
-Features
-Quick Start
-CSS Customization Guide
-CSS Selector Reference
-Quick Customization Examples
-Pre-built Themes
-Responsive Customization
-Advanced Examples
-Troubleshooting
-How It Works
-Support
+1. Live Demo
+2. Features
+3. Quick Start
+4. CSS Customization Guide
+5. CSS Selector Reference
+6. Quick Customization Examples
+7. Pre-built Themes
+8. Responsive Customization
+9. Advanced Examples
+10. Troubleshooting
+11. How It Works
+12. Support
 
 [A link to that custom anchor](#-support)
 
