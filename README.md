@@ -17,7 +17,7 @@ A simple, embeddable widget that displays the current U.S. National Debt with li
 11. How It Works
 12. Support
 
-[A link to that custom anchor](#-support)
+[Support](#-support)
 
 ## 🚀 Live Demo
 
